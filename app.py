@@ -53,7 +53,7 @@ def save_to_google_sheets(user_name, mobile, place, age_group, score, total, act
 # --- 3. FRONTEND UI ---
 st.set_page_config(page_title="മലയാളം ഓൺലൈൻ ക്വിസ്", page_icon="📝", layout="centered")
 
-st.title(f"🎯 ഓൺലൈൻ ക്വിസ് മത്സരം (വാരം - {CURRENT_ACTIVE_WEEK})")
+st.title(f"🎯 ലോഗോസ് ക്വിസ് ഓൺലൈൻ മത്സരം (വാരം - {CURRENT_ACTIVE_WEEK})")
 st.write("ചോദ്യങ്ങൾക്ക് ശരിയായ ഉത്തരം നൽകുക. ഫലങ്ങൾ തത്സമയം റെക്കോർഡ് ചെയ്യപ്പെടും.")
 st.markdown("---")
 
