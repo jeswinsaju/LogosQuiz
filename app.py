@@ -2,7 +2,7 @@ import streamlit as st
 import gspread
 
 # --- 1. CONFIGURATION ---
-CURRENT_ACTIVE_WEEK = 5
+CURRENT_ACTIVE_WEEK = 6
 
 # --- 2. DATABASE UTILITIES ---
 @st.cache_data(ttl=600)
