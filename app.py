@@ -2,13 +2,13 @@ import streamlit as st
 import json
 import time
 
-st.set_page_config(page_title="IPDE - ICD-10 Screening Tool (Week 6)", layout="wide")
+st.set_page_config(page_title="IPDE - ICD-10 Screening Tool", layout="wide")
 
-# Set Quiz Duration (10 minutes = 600 seconds)
+# Set Quiz Duration (e.g., 10 minutes = 600 seconds)
 QUIZ_DURATION_SECONDS = 10 * 60
-WEEK_NUMBER = "Week 6"  # Set active week tag here
 
 # --- 1. SESSION ISOLATION INIT ---
+# Storing user responses & timestamps strictly in session_state prevents user cross-talk
 if "user_responses" not in st.session_state:
     st.session_state.user_responses = {}
 if "quiz_started" not in st.session_state:
@@ -18,7 +18,7 @@ if "start_time" not in st.session_state:
 if "submitted" not in st.session_state:
     st.session_state.submitted = False
 
-# Database of Questions
+# Database of Malayalam Questions
 QUESTIONS = {
     1: "സാധാരണയായി എനിക്ക് ജീവിതത്തിൽ നിന്ന് സന്തോഷവും ആസ്വാദനവും ലഭിക്കുന്നു.",
     2: "ആരെങ്കിലും എന്നെ വ്രണപ്പെടുത്തുമ്പോൾ ഞാൻ ശരിയായ രീതിയിൽ/വേണ്ടവിധം പ്രതികരിക്കാറില്ല.",
@@ -41,7 +41,6 @@ SCORING_GRID = {
 # --- 2. WELCOME / START SCREEN ---
 if not st.session_state.quiz_started:
     st.title("IPDE - ICD-10 Screening Tool")
-    st.subheader(f"📌 Assessment Module: {WEEK_NUMBER}")
     st.write("📋 **Instructions:** You will have **10 minutes** to complete this assessment.")
     
     p_name = st.text_input("പേര് (Participant Name)", key="init_p_name")
@@ -52,18 +51,17 @@ if not st.session_state.quiz_started:
         else:
             st.session_state.p_name = p_name
             st.session_state.quiz_started = True
-            st.session_state.start_time = time.time()
+            st.session_state.start_time = time.time()  # Unique start time per session
             st.rerun()
     st.stop()
 
-# --- 3. TIMER CALCULATION ---
+# --- 3. TIMER CALCULATION (Per Session) ---
 elapsed = time.time() - st.session_state.start_time
 remaining_time = max(0, int(QUIZ_DURATION_SECONDS - elapsed))
 
 mins, secs = divmod(remaining_time, 60)
 
 st.sidebar.title("⏱️ Quiz Timer")
-st.sidebar.info(f"**Current Session:** {WEEK_NUMBER}")
 timer_widget = st.sidebar.empty()
 
 if remaining_time > 60:
@@ -73,11 +71,12 @@ elif remaining_time > 0:
 else:
     timer_widget.error("⏰ Time Expired!")
 
+# Force auto-submit if time reaches 0
 if remaining_time == 0:
     st.session_state.submitted = True
 
 # --- 4. QUESTIONNAIRE FORM ---
-st.title(f"Assessment: {st.session_state.get('p_name', 'Participant')} ({WEEK_NUMBER})")
+st.title(f"Assessment: {st.session_state.get('p_name', 'Participant')}")
 
 if not st.session_state.submitted:
     with st.form("quiz_form"):
@@ -89,6 +88,7 @@ if not st.session_state.submitted:
             with target_col:
                 st.markdown(f"**Q-{item_no}:** {question_text}")
                 
+                # Fetch existing response if script reruns
                 current_val = st.session_state.user_responses.get(item_no, "Unanswered")
                 idx = 0
                 if current_val is True: idx = 1
@@ -102,6 +102,7 @@ if not st.session_state.submitted:
                     label_visibility="collapsed"
                 )
                 
+                # Save into session state dynamically
                 if resp == "ശരി (True)":
                     st.session_state.user_responses[item_no] = True
                 elif resp == "തെറ്റ് (False)":
@@ -114,34 +115,18 @@ if not st.session_state.submitted:
             st.session_state.submitted = True
             st.rerun()
 
-# --- 5. RESULTS DISPLAY & EXPORT ---
+# --- 5. RESULTS DISPLAY ---
 if st.session_state.submitted:
     st.success("✅ Assessment Completed and Submitted!")
-    st.header(f"Results Summary for {st.session_state.get('p_name')} [{WEEK_NUMBER}]")
+    st.header(f"Results Summary for {st.session_state.get('p_name')}")
     
+    # Calculate scores from isolated user_responses
     table_rows = []
-    results_breakdown = {}
     for diagnosis, scoring_criteria in SCORING_GRID.items():
         score = sum(1 for item, expected in scoring_criteria if st.session_state.user_responses.get(item) == expected)
-        results_breakdown[diagnosis] = f"{score} / {len(scoring_criteria)}"
         table_rows.append({"Category": diagnosis, "Score": f"{score} / {len(scoring_criteria)}"})
     
     st.table(table_rows)
-
-    # JSON export includes the week tag
-    export_payload = {
-        "week": WEEK_NUMBER,
-        "participant_name": st.session_state.get("p_name"),
-        "scores": results_breakdown,
-        "responses": st.session_state.user_responses
-    }
-
-    st.download_button(
-        label="📥 Download Assessment JSON Data",
-        data=json.dumps(export_payload, indent=4, ensure_ascii=False),
-        file_name=f"IPDE_{WEEK_NUMBER}_{st.session_state.get('p_name')}.json",
-        mime="application/json"
-    )
     
     if st.button("🔄 Start New Screening"):
         st.session_state.clear()
