@@ -4,9 +4,13 @@ import time
 from datetime import datetime
 
 # --- 1. CONFIGURATION ---
-CURRENT_ACTIVE_WEEK = 7
+CURRENT_ACTIVE_WEEK = 8
 QUIZ_DURATION_MINUTES = 10  # ക്വിസ് സമയം (മിനിറ്റിൽ)
 QUIZ_DURATION_SECONDS = QUIZ_DURATION_MINUTES * 60
+
+# അടുത്ത ശനിയാഴ്ചത്തെ ക്വിസ് വിവരങ്ങൾ (ഇവിടെ ആവശ്യാനുസരണം മാറ്റങ്ങൾ വരുത്താം)
+NEXT_QUIZ_DATE = "അടുത്ത ശനിയാഴ്ച"
+NEXT_QUIZ_TOPICS = "1 സാമുവേൽ 4, 5, 6, 7 "
 
 # --- 2. DATABASE UTILITIES ---
 @st.cache_data(ttl=600)
@@ -111,25 +115,28 @@ if not st.session_state.quiz_started and not st.session_state.quiz_submitted:
             st.session_state.quiz_started = True
             st.session_state.start_time = time.time()
             st.rerun()
+
+    # മുകളിൽ ചേർത്ത NEXT QUIZ INFO CARD
+    st.markdown("---")
+    st.info(f"📌 **അടുത്ത ശനിയാഴ്ചത്തെ ക്വിസ് വിഷയം:**\n\n🗓️ **തീയതി:** {NEXT_QUIZ_DATE}\n\n📖 **പാഠഭാഗങ്ങൾ:** {NEXT_QUIZ_TOPICS}")
     st.stop()
 
-# --- STEP 2: TIMER LOGIC ---
+# --- STEP 2: LIVE TIMER IN SIDEBAR ---
 if st.session_state.quiz_started and not st.session_state.quiz_submitted:
     elapsed = time.time() - st.session_state.start_time
     remaining_time = max(0, int(QUIZ_DURATION_SECONDS - elapsed))
-    
     mins, secs = divmod(remaining_time, 60)
 
     st.sidebar.title("⏱️ ക്വിസ് ടൈമർ")
     st.sidebar.info(f"**വാരം:** Week {CURRENT_ACTIVE_WEEK}")
-    timer_widget = st.sidebar.empty()
-
+    
+    # Live Timer Display
     if remaining_time > 60:
-        timer_widget.metric(label="ബാക്കിയുള്ള സമയം", value=f"{mins:02d}:{secs:02d}")
+        st.sidebar.metric(label="ബാക്കിയുള്ള സമയം", value=f"{mins:02d}:{secs:02d}")
     elif remaining_time > 0:
-        timer_widget.metric(label="⚠️ സമയം അവസാനിക്കാറായി!", value=f"{mins:02d}:{secs:02d}")
+        st.sidebar.metric(label="⚠️ സമയം അവസാനിക്കാറായി!", value=f"{mins:02d}:{secs:02d}")
     else:
-        timer_widget.error("⏰ സമയം അവസാനിച്ചു!")
+        st.sidebar.error("⏰ സമയം അവസാനിച്ചു!")
 
 # --- STEP 3: QUIZ QUESTIONNAIRE FORM ---
 if st.session_state.quiz_started and not st.session_state.quiz_submitted:
@@ -144,7 +151,6 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
         for q in QUIZ_QUESTIONS:
             st.markdown(f"#### Q{q['id']}. {q['question']}")
             
-            # Fetch previous answer selection if re-rendered
             saved_ans = st.session_state.user_responses.get(q['id'])
             idx = q['options'].index(saved_ans) if saved_ans in q['options'] else None
             
@@ -158,7 +164,6 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
         
         submitted = st.form_submit_button("Submit (സമർപ്പിക്കുക)")
         
-        # Check timer status or form submission
         time_expired = (remaining_time == 0)
 
         if submitted or time_expired:
@@ -195,12 +200,25 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
                         st.session_state.quiz_submitted = True
                         st.rerun()
 
-# --- STEP 4: SHOW DETAILED RESULTS AFTER SUBMISSION ---
+# --- STEP 4: SHOW DETAILED RESULTS & NEXT QUIZ NOTICE AFTER SUBMISSION ---
 if st.session_state.quiz_submitted:
     st.title("📊 ക്വിസ് ഫലങ്ങൾ")
     st.success("🎉 നിങ്ങളുടെ ഉത്തരങ്ങൾ വിജയകരമായി സമർപ്പിച്ചു കഴിഞ്ഞു!")
     st.metric(label="നിങ്ങൾക്ക് ലഭിച്ച ആകെ മാർക്ക്", value=f"{st.session_state.final_score} / {st.session_state.total_q}")
     
+    # 🌟 NEXT SATURDAY QUIZ ANNOUNCEMENT BOX 🌟
+    st.markdown("---")
+    st.warning(f"""
+    ### 📢 അടുത്ത വാരത്തിലെ ക്വിസ് അറിയിപ്പ് (Week {CURRENT_ACTIVE_WEEK + 1})
+    
+    🗓️ **തീയതി:** {NEXT_QUIZ_DATE}  
+    📖 **അടുത്ത ആഴ്ചയിലെ പഠനഭാഗങ്ങൾ:**  
+    *{NEXT_QUIZ_TOPICS}*  
+    
+    *ദയവായി ഈ പാഠഭാഗങ്ങൾ മുൻകൂട്ടി പഠിച്ച് തയ്യാറാകുക. ആശംസകൾ!*
+    """)
+    st.markdown("---")
+
     st.markdown("### 📊 നിങ്ങളുടെ ഉത്തരങ്ങളുടെ വിവരങ്ങൾ:")
     st.markdown("---")
     
