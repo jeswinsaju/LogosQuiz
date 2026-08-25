@@ -10,7 +10,7 @@ QUIZ_DURATION_SECONDS = QUIZ_DURATION_MINUTES * 60
 
 # അടുത്ത ശനിയാഴ്ചത്തെ ക്വിസ് വിവരങ്ങൾ (ഇവിടെ ആവശ്യാനുസരണം മാറ്റങ്ങൾ വരുത്താം)
 NEXT_QUIZ_DATE = "അടുത്ത ശനിയാഴ്ച"
-NEXT_QUIZ_TOPICS = "1 സാമുവേൽ 4, 5, 6, 7 "
+NEXT_QUIZ_TOPICS = "സഭാപ്രസംഗകൻ 1,2,3 "
 
 # --- 2. DATABASE UTILITIES ---
 @st.cache_data(ttl=600)
