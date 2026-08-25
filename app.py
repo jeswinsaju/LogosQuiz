@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 # --- 1. CONFIGURATION ---
-CURRENT_ACTIVE_WEEK = 8
+CURRENT_ACTIVE_WEEK = 9
 QUIZ_DURATION_MINUTES = 10  # ക്വിസ് സമയം (മിനിറ്റിൽ)
 QUIZ_DURATION_SECONDS = QUIZ_DURATION_MINUTES * 60
 
